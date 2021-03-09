@@ -141,4 +141,11 @@ impl<'c> Rate<'c> {
     pub fn cache_until(&self) -> &Option<DateTime<LocalTime>> {
         &self.cache_until
     }
+
+    pub fn uptodate(&self, now: DateTime<LocalTime>) -> bool {
+        match self.cache_until() {
+            Some(date) => date > &now,
+            None => false,
+        }
+    }
 }

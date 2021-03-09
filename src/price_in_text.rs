@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use itertools::Itertools;
 use log::{debug, trace};
-use serde_derive::Serialize;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
 use std::convert::TryInto;
@@ -36,7 +35,7 @@ mod tests;
 
 // Information about a price tag match, will be used to compute the probability
 // of assocation between an amount and a currency
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct PriceTagMatch<'c> {
     // Amount of the currency
     amount: f64,
@@ -299,9 +298,9 @@ impl<'c> EngineBuilder<'c> {
             let alternatives_unicode_escaped = alternatives_slices
                 .into_iter()
                 .map(|a| a.iter().map(|s| format!("{}", s.escape_unicode())));
-            for s in alternatives_unicode_escaped
+            for s in Itertools::intersperse(alternatives_unicode_escaped
                 .flatten()
-                .intersperse("|".to_owned())
+                , "|".to_owned())
             {
                 currency_match_string.push_str(&s);
             }

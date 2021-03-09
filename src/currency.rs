@@ -58,7 +58,7 @@ impl Default for Pos {
 }
 
 /// An association between currency & amount, TODO with a position
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PriceTag<'c> {
     currency: &'c Currency,
     amount: f64,
@@ -115,16 +115,13 @@ impl<'a, 'c, 'r> ConversionError<'a, 'c, 'r> {
 
 /// Represent a currency like US Dollar or Euro, with its symbols
 // TODO Improve serialization/deserialization
-#[derive(Debug, Default, PartialOrd, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, PartialOrd, PartialEq, Clone)]
 pub struct Currency {
     /// Symbols, like ₿, ฿ or Ƀ for Bitcoin. Slice must not be empty
-    #[serde(skip)]
     symbols: &'static [&'static str],
     /// ISO4217-ish symbol, like BTC or XBT for Bitcoin. Slice must not be empty
-    #[serde(skip)]
     isos: &'static [&'static str],
     /// Human name(s). Slice must not be empty
-    #[serde(skip)]
     names: &'static [&'static str],
     /// Position to display symbols
     pos: Pos,

@@ -18,25 +18,32 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Store and retrieve user configuration
 
+use clap::crate_name;
 use log::info;
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+fn data_dir() -> PathBuf {
+    let mut path = dirs_next::data_dir().unwrap();
+    path.push(crate_name!());
+    path
+}
 
 /// Configuration file
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     /// Version of the config file
-    pub version: u8,
+    version: u8,
     /// Currencies to convert to
-    pub currencies: Vec<String>,
+    currencies: Vec<String>,
     /// Path of the database (directory). Please note that ~ is not expanded
-    pub db_path: PathBuf,
+    db_path: PathBuf,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        let mut db_path = dirs_next::data_dir().unwrap();
-        db_path.push("sesters/db");
+        let mut db_path = dbg!(data_dir());
+        db_path.push("db.sqlite3");
         Config {
             version: 0,
             currencies: vec!["EUR".to_string(), "USD".to_string(), "GBP".to_string()],
@@ -45,18 +52,18 @@ impl Default for Config {
     }
 }
 
-static APP_NAME: &str = "sesters";
-
 impl Config {
     /// Get current configuration
-    pub fn get() -> Result<Config, confy::ConfyError> {
+    pub fn new() -> Result<Config, confy::ConfyError> {
         info!("Reading configuration");
-        confy::load(APP_NAME)
+        confy::load(crate_name!())
     }
 
-    /// Change current configuration
-    pub fn set(c: Config) -> Result<(), confy::ConfyError> {
-        info!("Writing configuration");
-        confy::store(APP_NAME, c)
+    pub fn db_path(&self) -> &PathBuf {
+        &self.db_path
+    }
+
+    pub fn currencies(&self) -> &Vec<String> {
+        &self.currencies
     }
 }

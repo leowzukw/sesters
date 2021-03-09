@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use anyhow::Result;
 use clap::ArgMatches;
-use kv::{Config as KvConfig, Manager};
 use log::{error, info};
 use std::io::stdout;
 
@@ -25,10 +25,10 @@ mod api;
 mod clap_def;
 mod config;
 mod convert;
-mod currency;
+pub mod currency;
 mod db;
 mod price_format;
-mod price_in_text;
+pub mod price_in_text;
 mod rate;
 
 use crate::config::Config;
@@ -43,18 +43,24 @@ pub(crate) struct MainContext<'mc> {
     cfg: Config,
 }
 
-fn from_args(matches: ArgMatches) {
-    let mut out = stdout();
-    let cfg = Config::get().unwrap();
+impl<'mc> MainContext<'mc> {
+    pub(crate) fn new(cfg: Config, destination_currencies: Vec<&'mc Currency>) -> Result<Self> {
+        let db = Db::new(&cfg).unwrap();
 
-    // Manager for the database
-    let mut mgr = Manager::new();
-    info!("Initialize database");
-    let kcfg = KvConfig::default(&cfg.db_path);
-    let db = Db::new(kcfg, &mut mgr);
+        Ok(MainContext {
+            cfg,
+            db,
+            destination_currencies,
+        })
+    }
+}
+
+fn from_args(matches: ArgMatches) -> Result<()> {
+    let mut out = stdout();
+    let cfg = Config::new()?;
 
     // Argument parsing
-    let currency_iso_names_cfg: Vec<&str> = cfg.currencies.iter().map(|s| s.as_str()).collect();
+    let currency_iso_names_cfg: Vec<&str> = cfg.currencies().iter().map(|s| s.as_str()).collect();
     let currency_iso_names: Vec<&str> = matches
         .values_of("TO")
         .map_or(currency_iso_names_cfg, |to| to.collect());
@@ -68,20 +74,15 @@ fn from_args(matches: ArgMatches) {
         })
         .collect();
 
-    let ctxt = MainContext {
-        db,
-        cfg,
-        destination_currencies,
-    };
+    let ctxt = MainContext::new(cfg, destination_currencies)?;
 
     match matches.subcommand() {
-        ("convert", Some(m)) => crate::convert::run(ctxt, m),
-        (_, _) => crate::clap_def::get_app()
-            .write_long_help(&mut out)
-            .expect("failed to write to stdout"),
+        ("convert", Some(m)) => crate::convert::run(ctxt, m)?,
+        (_, _) => crate::clap_def::get_app().write_long_help(&mut out)?,
     }
 
     info!("Exiting");
+    Ok(())
 }
 
 fn main() {
@@ -89,5 +90,5 @@ fn main() {
     env_logger::init();
     info!("Starting up");
 
-    from_args(crate::clap_def::get_app().get_matches());
+    from_args(crate::clap_def::get_app().get_matches()).unwrap();
 }

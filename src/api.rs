@@ -81,6 +81,7 @@ pub trait RateApi {
 /// For https://currencyconverterapi.com
 pub struct CurrencyConverterApiCom {
     /// API key, if any
+    #[allow(dead_code)] // TODO Use the key field
     key: String,
 }
 
@@ -130,6 +131,7 @@ impl RateApi for CurrencyConverterApiCom {
 /// For https://exchangeratesapi.io/
 pub struct ExchangeRatesApiIo {
     /// API key, if any
+    #[allow(dead_code)] // TODO Use the key field
     key: String,
 }
 
